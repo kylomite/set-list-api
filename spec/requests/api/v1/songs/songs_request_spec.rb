@@ -120,7 +120,27 @@ RSpec.describe "Songs endpoints" do
 
       expect(data[:errors]).to be_a(Array)
       expect(data[:errors].first[:status]).to eq("404")
-      expect(data[:errors].first[:title]).to eq("Couldn't find Song with 'id'=123489846278")
+      expect(data[:errors].first[:message]).to eq("Couldn't find Song with 'id'=123489846278")
+    end
+
+    it "will gracefully handle creating a song with a title, but without an artist ID" do
+      song_params = ({
+        title: "Get Up Offa That Thing",
+        length: 4567,
+        play_count: 456445
+      })
+
+      post "/api/v1/songs", params: song_params, as: :json
+      created_song = Song.last
+
+      expect(response).to_not be_successful
+      expect(response.status).to eq(422)
+
+      data = JSON.parse(response.body, symbolize_names: true)
+
+      expect(data[:errors]).to be_a(Array)
+      expect(data[:errors].first[:status]).to eq("422")
+      expect(data[:errors].first[:message]).to eq("Validation failed: Artist must exist")
     end
   end
 end
